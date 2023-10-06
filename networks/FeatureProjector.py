@@ -3,10 +3,12 @@ import torch.nn as nn
 import torch.nn.functional as func
 
 class FeatureProjector(nn.Module):
-    def __init__(self):
+    def __init__(self,scale):
         super(FeatureProjector,self).__init__()
+        self.scale = scale
 
     def forward(self, features, projections, depth_values):
+        scale = self.scale
         with torch.no_grad():
             batch_size, view_size = features.shape[0], features.shape[1]
             channels = features.shape[2]
@@ -19,8 +21,8 @@ class FeatureProjector(nn.Module):
             else:
                 depth_values = depth_values.reshape(batch_size,1,1,height*width)
 
-            x = torch.arange(0, width, dtype=torch.float32).cuda()
-            y = torch.arange(0, height, dtype=torch.float32).cuda()
+            x = torch.arange(0, width, dtype=torch.float32).cuda() * scale
+            y = torch.arange(0, height, dtype=torch.float32).cuda() * scale
             x, y = torch.meshgrid([x,y],indexing="xy")
             x = x.contiguous()
             y = y.contiguous()
@@ -34,8 +36,8 @@ class FeatureProjector(nn.Module):
             coord_grid += translations
 
             coord_grid = coord_grid[:, :, :2, :] / coord_grid[:, :, 2:3, :]
-            x = coord_grid[:, :, 0, :] / (width - 1) * 2 - 1
-            y = coord_grid[:, :, 1, :] / (height - 1) * 2 - 1
+            x = coord_grid[:, :, 0, :] / (width * scale - 1) * 2 - 1
+            y = coord_grid[:, :, 1, :] / (height * scale - 1) * 2 - 1
             coord_grid = torch.stack((x, y), dim = 3)
 
         features = features.reshape(batch_size*view_size,channels,height,width)

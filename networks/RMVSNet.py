@@ -8,12 +8,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class RMVSNet(nn.Module):
-    def __init__(self,feature_batch_size = 1,channels = 32):
+    def __init__(self,feature_batch_size = 1,channels = 32,scale = 2):
         super(RMVSNet,self).__init__()
         self.feature_batch_size = feature_batch_size
 
         self.feature_extractor = FeatureExtractor(output_channels=channels)
-        self.feature_projector = FeatureProjector()
+        self.feature_projector = FeatureProjector(scale=scale)
 
         self.channels_0 = channels
         self.channels_1 = channels // 2
@@ -26,20 +26,11 @@ class RMVSNet(nn.Module):
 
         self.conv = nn.Conv2d(2, 1, 3, 1, 1)
     
-    def train_feature_extractor(self,images,projections,depths):
+    def test_feature_projector(self,images,projections,depths):
         batch_size,view_size,channels,height,width = images.shape
         features = []
 
         images = images.reshape(batch_size*view_size,channels,height,width)
-        # if self.feature_batch_size <= batch_size * view_size:
-        #     features = torch.unbind(self.feature_extractor(images),0)
-        # else:
-        #     for i in range((batch_size*view_size)//self.feature_batch_size):
-        #         start_index = self.feature_batch_size * i
-        #         end_index = min(batch_size,self.feature_batch_size * (i + 1))
-        #         features = features + torch.unbind(self.feature_extractor(images[start_index:end_index]),0)
-        
-        # features = torch.stack(features)
         features = images[:,:,::4,::4]
         height = height // 4
         width = width // 4
@@ -60,7 +51,16 @@ class RMVSNet(nn.Module):
             mask_pro = mask_pro.unsqueeze(2)
         test_image = features_pro[0,0].permute(1,2,0)
         test_image = np.array(test_image.detach().cpu())
+        features_ref = features_ref[0,0].permute(1,2,0)
+        features_ref = np.array(features_ref.detach().cpu())
+        features_src = features_src[0,0].permute(1,2,0)
+        features_src = np.array(features_src.detach().cpu())
+        plt.subplot(1,3,1)
+        plt.imshow(features_src)
+        plt.subplot(1,3,2)
         plt.imshow(test_image)
+        plt.subplot(1,3,3)
+        plt.imshow(features_ref)
         plt.show()
         
 

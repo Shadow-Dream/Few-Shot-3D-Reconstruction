@@ -5,6 +5,7 @@ from PIL import Image
 from datasets.data_io import *
 import torch
 import cv2 as cv
+import matplotlib.pyplot as plt
 
 class MVSDataset(Dataset):
     def __init__(self, datapath, listfile, mode, nviews, ndepths=192, interval_scale=1.06, **kwargs):
@@ -61,11 +62,7 @@ class MVSDataset(Dataset):
         img = Image.open(filename)
         # scale 0~255 to 0~1
         np_img = np.array(img, dtype=np.float32)
-        if len(np_img.shape)==3:
-            height,width,channels = np_img.shape
-        else:
-            height,width = np_img.shape
-        np_img = cv.resize(np_img,(width//2,height//2))
+        np_img = np_img[::2,::2]
         np_img = np_img / 255.
         return np_img
 
@@ -114,8 +111,8 @@ class MVSDataset(Dataset):
                                          dtype=np.float32)
                 mask = self.read_img(mask_filename)
                 depth = self.read_depth(depth_filename)
-                height,width = depth.shape
-                depth = cv.resize(depth,(width//2,height//2))
+                depth = depth[::2,::2]
+
 
         imgs = np.stack(imgs).transpose([0, 3, 1, 2])
         proj_matrices = np.stack(proj_matrices)
