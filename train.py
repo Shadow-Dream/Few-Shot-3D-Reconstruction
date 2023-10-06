@@ -7,22 +7,25 @@ from torch.optim import Adam
 import tqdm
 import numpy
 import matplotlib.pyplot as plt
-
+import os
 import torch.nn.functional as func
 
 from networks.FeatureProjector import FeatureProjector
 
 BATCH_SIZE = 1
-VIEW_SIZE = 2
+VIEW_SIZE = 5
 SAVE_DELTA = 64
 EPOCHES = 100
 
 model = RMVSNet()
 model.cuda().train()
 dataset = MVSDataset("./datasets/dtu/", "lists/dtu/train.txt", "train", VIEW_SIZE, 128, 1.59)
-optimizer = Adam(model.parameters(), lr=0.0001)
+optimizer = Adam(model.parameters(), lr=0.001)
 
 DATASET_SIZE = len(dataset.metas)
+
+if os.path.exists("model.ckpt"):
+    model.load_state_dict(torch.load("model.ckpt"))
 
 def mvsnet_loss(depth_pred, depth_real, mask):
     mask = mask == 1
@@ -39,7 +42,7 @@ for epoch in range(EPOCHES):
             batch_depth_values = []
             batch_masks = []
             for j in range(BATCH_SIZE):
-                sample = dataset[i * BATCH_SIZE + j]
+                sample = dataset[0 * BATCH_SIZE + j]
                 batch_images.append(sample["imgs"])
                 batch_projections.append(sample["proj_matrices"])
                 batch_depthes.append(sample["depth"])
@@ -65,3 +68,8 @@ for epoch in range(EPOCHES):
         pbar.set_postfix({"epoch":epoch,"loss":loss,"average loss":average_loss,})
         if i % SAVE_DELTA == SAVE_DELTA - 1:
             torch.save(model.state_dict(),"model.ckpt")
+        plt.subplot(1,2,1)
+        plt.imshow(batch_masks[0].detach().cpu()*depth_map[0].detach().cpu(),vmin=batch_depth_values.min(), vmax=batch_depth_values.max())
+        plt.subplot(1,2,2)
+        plt.imshow(batch_depthes[0].detach().cpu(),vmin=batch_depth_values.min(), vmax=batch_depth_values.max())
+        plt.savefig("results/{}.png".format(i))
