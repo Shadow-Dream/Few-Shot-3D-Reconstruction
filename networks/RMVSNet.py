@@ -8,24 +8,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class RMVSNet(nn.Module):
-    def __init__(self,feature_batch_size = 1,channels = 32,scale = 2):
+    def __init__(self,gru1,gru2,gru3,regressive_network,feature_extractor,feature_projector,feature_batch_size = 1):
         super(RMVSNet,self).__init__()
         self.feature_batch_size = feature_batch_size
+        
+        self.channels = feature_extractor.output_channels
+        self.channels_0 = self.gru1.in_channels
+        self.channels_1 = self.gru1.out_channels
+        self.channels_2 = self.gru2.out_channels
+        self.channels_3 = self.gru3.out_channels
 
-        self.feature_extractor = FeatureExtractor(output_channels=channels)
-        self.feature_projector = FeatureProjector(scale=scale)
+        self.feature_extractor = feature_extractor
+        self.feature_projector = feature_projector
+        self.gru1 = gru1
+        self.gru2 = gru2
+        self.gru3 = gru3
+        self.regressive_network = regressive_network
 
-        self.channels_0 = channels
-        self.channels_1 = channels // 2
-        self.channels_2 = channels // 8
-        self.channels_3 = channels // 16
-
-        self.gru1 = GateRecurrentUnit(self.channels_0,self.channels_1)
-        self.gru2 = GateRecurrentUnit(self.channels_1,self.channels_2)
-        self.gru3 = GateRecurrentUnit(self.channels_2,self.channels_3)
-
-        self.conv = nn.Conv2d(2, 1, 3, 1, 1)
-    
     def test_feature_projector(self,images,projections,depths):
         batch_size,view_size,channels,height,width = images.shape
         features = []
@@ -62,7 +61,6 @@ class RMVSNet(nn.Module):
         plt.subplot(1,3,3)
         plt.imshow(features_ref)
         plt.show()
-        
 
     def forward(self,images,projections,depth_layers):
         batch_size,view_size,channels,height,width = images.shape
@@ -103,7 +101,7 @@ class RMVSNet(nn.Module):
             cost_1 = self.gru1(- cost, cost_1)
             cost_2 = self.gru2(cost_1, cost_2)
             cost_3 = self.gru3(cost_2, cost_3)
-            regressive_cost = self.conv(cost_3)
+            regressive_cost = self.regressive_network(cost_3)
             depth_costs.append(regressive_cost)
 
         volume = torch.cat(depth_costs, 1)

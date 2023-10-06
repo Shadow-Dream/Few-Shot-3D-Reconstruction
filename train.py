@@ -11,14 +11,25 @@ import os
 import torch.nn.functional as func
 
 from networks.FeatureProjector import FeatureProjector
+from networks.FeatureExtractor import FeatureExtractor
+from networks.GateRecurrentUnit import GateRecurrentUnit
+from networks.RegressiveNetwork import RegressiveNetwork
 
 BATCH_SIZE = 1
 VIEW_SIZE = 5
 SAVE_DELTA = 64
 EPOCHES = 100
 
-model = RMVSNet()
+gru1 = GateRecurrentUnit(32,16)
+gru2 = GateRecurrentUnit(16,4)
+gru3 = GateRecurrentUnit(4,2)
+regressive_network = RegressiveNetwork(2)
+feature_extractor = FeatureExtractor(output_channels=32)
+feature_projector = FeatureProjector(scale=2)
+
+model = RMVSNet(gru1,gru2,gru3,regressive_network,feature_extractor,feature_projector)
 model.cuda().train()
+
 dataset = MVSDataset("./datasets/dtu/", "lists/dtu/train.txt", "train", VIEW_SIZE, 128, 1.59)
 optimizer = Adam(model.parameters(), lr=0.001)
 
