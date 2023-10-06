@@ -8,6 +8,8 @@ import tqdm
 import numpy
 import matplotlib.pyplot as plt
 
+import torch.nn.functional as func
+
 from networks.FeatureProjector import FeatureProjector
 
 BATCH_SIZE = 1
@@ -21,6 +23,10 @@ dataset = MVSDataset("./datasets/dtu/", "lists/dtu/train.txt", "train", VIEW_SIZ
 optimizer = Adam(model.parameters(), lr=0.0001)
 
 DATASET_SIZE = len(dataset.metas)
+
+def mvsnet_loss(depth_pred, depth_real, mask):
+    mask = mask == 1
+    return func.smooth_l1_loss(depth_pred[mask], depth_real[mask], size_average=True)
 
 for epoch in range(EPOCHES):
     losses = []
@@ -46,16 +52,16 @@ for epoch in range(EPOCHES):
             batch_depth_values = torch.stack(batch_depth_values)
             batch_masks = torch.stack(batch_masks)
         
-        model.test_feature_projector(batch_images,batch_projections,batch_depthes)
-        # optimizer.zero_grad()
-        # depth_map = model(batch_images,batch_projections, batch_depth_values)
+        # model.test_feature_projector(batch_images,batch_projections,batch_depthes)
+        optimizer.zero_grad()
+        depth_map = model(batch_images,batch_projections, batch_depth_values)
         
-        # loss = torch.mean((batch_masks * (depth_map - batch_depthes) / max_delta_depth)**2)
-        # loss.backward()
-        # optimizer.step()
-        # loss = float(loss.detach().cpu())
-        # losses.append(loss)
-        # average_loss = numpy.mean(numpy.array(losses))
-        # pbar.set_postfix({"epoch":epoch,"loss":loss,"average loss":average_loss,})
-        # if i % SAVE_DELTA == SAVE_DELTA - 1:
-        #     torch.save(model.state_dict(),"model.ckpt")
+        loss = mvsnet_loss(depth_map,batch_depthes,batch_masks)
+        loss.backward()
+        optimizer.step()
+        loss = float(loss.detach().cpu())
+        losses.append(loss)
+        average_loss = numpy.mean(numpy.array(losses))
+        pbar.set_postfix({"epoch":epoch,"loss":loss,"average loss":average_loss,})
+        if i % SAVE_DELTA == SAVE_DELTA - 1:
+            torch.save(model.state_dict(),"model.ckpt")
