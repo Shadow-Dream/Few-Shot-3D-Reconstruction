@@ -6,10 +6,11 @@ import cv2 as cv
 from torch.optim import Adam
 import tqdm
 import numpy
+import matplotlib.pyplot as plt
 
 from networks.FeatureProjector import FeatureProjector
 
-BATCH_SIZE = 2
+BATCH_SIZE = 1
 VIEW_SIZE = 2
 SAVE_DELTA = 64
 EPOCHES = 100
@@ -47,7 +48,7 @@ for epoch in range(EPOCHES):
 
             batch_masks = torch.where(batch_masks==1,torch.ones_like(batch_masks),torch.zeros_like(batch_masks))
             max_delta_depth = batch_depth_values.max() - batch_depth_values.min()
-            
+        
         optimizer.zero_grad()
         depth_map = model(batch_images,batch_projections, batch_depth_values)
         

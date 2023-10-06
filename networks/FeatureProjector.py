@@ -14,9 +14,14 @@ class FeatureProjector(nn.Module):
             rotations = projections[:, :, :3, :3]
             translations = projections[:, :, :3, 3:4]
 
+            if len(depth_values.shape) == 1:
+                depth_values = depth_values.reshape(batch_size,1,1,1)
+            else:
+                depth_values = depth_values.reshape(batch_size,1,1,height*width)
+
             x = torch.arange(0, width, dtype=torch.float32).cuda()
             y = torch.arange(0, height, dtype=torch.float32).cuda()
-            y, x = torch.meshgrid([y,x],indexing="xy")
+            x, y = torch.meshgrid([x,y],indexing="xy")
             x = x.contiguous()
             y = y.contiguous()
             x = x.ravel()
@@ -25,7 +30,7 @@ class FeatureProjector(nn.Module):
             coord_grid = torch.stack([x, y, torch.ones_like(x)]) 
             coord_grid = coord_grid.unsqueeze(0).unsqueeze(0).repeat(batch_size, view_size, 1, 1)
             coord_grid = torch.matmul(rotations, coord_grid)
-            coord_grid *= depth_values.view(batch_size,1,1,1)
+            coord_grid *= depth_values
             coord_grid += translations
 
             coord_grid = coord_grid[:, :, :2, :] / coord_grid[:, :, 2:3, :]
@@ -33,8 +38,8 @@ class FeatureProjector(nn.Module):
             y = coord_grid[:, :, 1, :] / (height - 1) * 2 - 1
             coord_grid = torch.stack((x, y), dim = 3)
 
-        features = features.view(batch_size*view_size,channels,height,width)
-        coord_grid = coord_grid.view(batch_size*view_size, height, width, 2)
+        features = features.reshape(batch_size*view_size,channels,height,width)
+        coord_grid = coord_grid.reshape(batch_size*view_size, height, width, 2)
         features = func.grid_sample(features, coord_grid, mode='bilinear',padding_mode='zeros')
-        features = features.view(batch_size, view_size, channels, height, width)
+        features = features.reshape(batch_size, view_size, channels, height, width)
         return features
