@@ -1,8 +1,8 @@
 import torch
 from torch import nn
 import torch.nn.functional as func
-from networks.ConvBlock import ConvBlock
-from networks.TransConvBlock import TransConvBlock
+from networks.conv_block import ConvBlock
+from networks.trans_conv_block import TransConvBlock
 
 class FeatureExtractorSmall(nn.Module):
     def __init__(self):

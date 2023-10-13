@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as func
-from networks.FeatureExtractor import FeatureExtractor
-from networks.FeatureProjector import FeatureProjector
-from networks.GateRecurrentUnit import GateRecurrentUnit
+from networks.feature_extractor import FeatureExtractor
+from networks.feature_projector import FeatureProjector
+from networks.gate_recurrent_unit import GateRecurrentUnit
 import matplotlib.pyplot as plt
 import numpy as np
 

@@ -69,6 +69,8 @@ class PositionPredictor:
     
     # 计算image_src到image_ref的投影矩阵projection matrix
     # 投影矩阵可以通过单应性矩阵和内参矩阵求出
+    # opencv好像有函数可以直接用
+    # 返回两张图像之间的投影矩阵
     def estimate_projection_matrix(self,image_ref,image_src):
         #TODO
         return

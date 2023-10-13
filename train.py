@@ -1,5 +1,5 @@
 from torch.utils.data import DataLoader
-from networks.RMVSNet import RMVSNet
+from networks.rmvs_net import RMVSNet
 import torch
 from datasets.dtu_yao import MVSDataset
 import cv2 as cv
@@ -10,10 +10,10 @@ import matplotlib.pyplot as plt
 import os
 import torch.nn.functional as func
 
-from networks.FeatureProjector import FeatureProjector
-from networks.FeatureExtractor import FeatureExtractor
-from networks.GateRecurrentUnit import GateRecurrentUnit
-from networks.RegressiveNetwork import RegressiveNetwork
+from networks.feature_projector import FeatureProjector
+from networks.feature_extractor import FeatureExtractor
+from networks.gate_recurrent_unit import GateRecurrentUnit
+from networks.regressive_network import RegressiveNetwork
 
 BATCH_SIZE = 1
 VIEW_SIZE = 5
